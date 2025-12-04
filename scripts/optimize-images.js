@@ -1,9 +1,10 @@
 // Script opcional para optimizar imágenes grandes
 // Instalar sharp: npm install --save-dev sharp
 
-const sharp = require('sharp')
-const fs = require('fs')
-const path = require('path')
+import fs from "fs";
+import path from "path";
+import sharp from "sharp";
+
 
 const publicDir = path.join(__dirname, '../public')
 const largeImages = [

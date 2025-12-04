@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: f1-dashboard
+  labels:
+    app: f1-dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app: f1-dashboard
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

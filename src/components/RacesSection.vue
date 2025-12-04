@@ -133,7 +133,7 @@ onMounted(async () => {
           
           <div class="space-y-4">
             <div 
-              v-for="(race, index) in recentRaces" 
+              v-for="race in recentRaces" 
               :key="race.meeting_key"
               class="group bg-gradient-to-r from-f1-red/10 to-transparent border border-f1-red/30 rounded-2xl p-6 hover:border-f1-red/50 transition-all duration-300"
             >

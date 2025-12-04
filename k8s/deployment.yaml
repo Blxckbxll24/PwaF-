@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: f1-dashboard
+  labels:
+    app: f1-dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: f1-dashboard
+  template:
+    metadata:
+      labels:
+        app: f1-dashboard
+    spec:
+      containers:
+        - name: f1-dashboard
+          image: <REGISTRY>/<NAMESPACE>/f1-dashboard:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+      imagePullSecrets:
+        - name: registry-credentials

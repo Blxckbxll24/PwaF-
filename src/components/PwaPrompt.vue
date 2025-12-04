@@ -35,7 +35,7 @@ const dismissUpdate = () => {
 
 onMounted(() => {
     // Install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener('beforeinstallprompt', (e: Event) => {
         e.preventDefault()
         deferredPrompt.value = e
 

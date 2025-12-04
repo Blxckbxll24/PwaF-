@@ -4,9 +4,7 @@ import { onMounted, computed } from 'vue'
 import { useF1Api } from '@/composables/useF1Api'
 
 const { 
-  drivers, 
   teamStats, 
-  loading, 
   fetchDrivers, 
   getUniqueTeams
 } = useF1Api()

@@ -122,22 +122,14 @@ onMounted(() => {
 
       <!-- Category Filters -->
       <div class="flex flex-wrap justify-center gap-4 mb-12">
-        <button
-          v-for="category in categories"
-          :key="category.id"
-          @click="filterImages(category.id)"
-          class="px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center gap-2"
-          :class="selectedCategory === category.id 
-            ? 'bg-f1-red text-white shadow-lg shadow-f1-red/30' 
-            : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'"
-        >
+        <button v-for="category in categories" :key="category.id" @click="filterImages(category.id)"
+          class="px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center gap-2" :class="selectedCategory === category.id
+            ? 'bg-f1-red text-white shadow-lg shadow-f1-red/30'
+            : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'">
           {{ category.name }}
-          <span 
-            class="text-xs px-2 py-1 rounded-full"
-            :class="selectedCategory === category.id 
-              ? 'bg-white/20' 
-              : 'bg-white/10'"
-          >
+          <span class="text-xs px-2 py-1 rounded-full" :class="selectedCategory === category.id
+            ? 'bg-white/20'
+            : 'bg-white/10'">
             {{ category.count }}
           </span>
         </button>
@@ -145,49 +137,49 @@ onMounted(() => {
 
       <!-- Gallery Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div
-          v-for="(image, index) in filteredImages"
-          :key="index"
+        <div v-for="(image, index) in filteredImages" :key="index"
           class="group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-f1-red/20"
-          @click="openModal(image)"
-        >
+          @click="openModal(image)">
           <!-- Image Container -->
           <div class="relative aspect-[16/10] overflow-hidden bg-gray-900">
             <!-- Indicador de imagen grande -->
-            <div v-if="image.isLarge" class="absolute top-2 left-2 z-10 px-2 py-1 bg-yellow-500/80 text-black text-xs font-bold rounded-full">
+            <div v-if="image.isLarge"
+              class="absolute top-2 left-2 z-10 px-2 py-1 bg-yellow-500/80 text-black text-xs font-bold rounded-full">
               HD
             </div>
-            
-            <img
-              :src="image.src"
-              :alt="image.alt"
+
+            <img :src="image.src" :alt="image.alt"
               class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
-              @error="handleImageError"
-              loading="lazy"
-            >
-            
+              @error="handleImageError" loading="lazy">
+
             <!-- Overlay Gradient -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-            
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300">
+            </div>
+
             <!-- Hover Icon -->
-            <div class="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+            <div
+              class="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
               <span class="text-white text-lg">🔍</span>
             </div>
           </div>
 
           <!-- Image Info -->
           <div class="absolute bottom-0 left-0 right-0 p-6">
-            <h3 class="text-white font-bold text-xl mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+            <h3
+              class="text-white font-bold text-xl mb-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
               {{ image.title }}
             </h3>
-            <p class="text-white/70 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-100">
+            <p
+              class="text-white/70 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-100">
               {{ image.description }}
             </p>
           </div>
 
           <!-- Category Badge -->
-          <div class="absolute top-4 left-4 px-3 py-1 bg-f1-red/80 backdrop-blur-sm rounded-full text-white text-xs font-semibold uppercase tracking-wider">
-            {{ categories.find(cat => cat.id === image.category)?.name || image.category }}
+          <div
+            class="absolute top-4 left-4 px-3 py-1 bg-f1-red/80 backdrop-blur-sm rounded-full text-white text-xs font-semibold uppercase tracking-wider">
+            {{categories.find(cat => cat.id === image.category)?.name || image.category}}
           </div>
         </div>
       </div>
@@ -202,27 +194,19 @@ onMounted(() => {
 
     <!-- Modal -->
     <Teleport to="body">
-      <div
-        v-if="selectedImage"
+      <div v-if="selectedImage"
         class="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-8"
-        @click="closeModal"
-      >
+        @click="closeModal">
         <div class="relative max-w-6xl max-h-full">
           <!-- Close Button -->
-          <button
-            @click="closeModal"
-            class="absolute -top-4 -right-4 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-xl transition-all duration-300 z-10"
-          >
+          <button @click="closeModal"
+            class="absolute -top-4 -right-4 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-xl transition-all duration-300 z-10">
             ✕
           </button>
 
           <!-- Modal Image -->
-          <img
-            :src="selectedImage.src"
-            :alt="selectedImage.alt"
-            class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-            @click.stop
-          >
+          <img :src="selectedImage.src" :alt="selectedImage.alt"
+            class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" @click.stop>
 
           <!-- Modal Info -->
           <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">

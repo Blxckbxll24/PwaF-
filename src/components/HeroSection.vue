@@ -3,7 +3,7 @@
 import { onMounted, computed } from 'vue'
 import { useF1Api } from '@/composables/useF1Api'
 
-const { stats, drivers, meetings, loading, fetchDrivers, fetchMeetings } = useF1Api()
+const { stats, drivers, loading, fetchDrivers, fetchMeetings } = useF1Api()
 
 const dynamicStats = computed(() => [
   { value: '75', label: 'Años de Historia' },

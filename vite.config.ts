@@ -163,3 +163,5 @@ export default defineConfig({
     },
   },
 })
+
+// No es un error de Vite: corrige nginx.conf en tu imagen Docker.
