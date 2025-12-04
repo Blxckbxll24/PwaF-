@@ -46,7 +46,8 @@ pipeline {
     stage('Docker Build') {
       steps {
         script {
-          docker.build("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
+          // Build para linux/amd64
+          docker.build("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}", "--platform linux/amd64 .")
         }
       }
     }
@@ -68,7 +69,7 @@ pipeline {
         withCredentials([file(credentialsId: "${KUBE_CREDS}", variable: 'KUBECONFIG')]) {
           sh '''
             export KUBECONFIG=$KUBECONFIG
-            # Aplicar manifests (sin tocar archivos)
+            # Aplicar manifests
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
             kubectl apply -f k8s/ingress.yaml
