@@ -1,64 +1,74 @@
-<!-- filepath: /Users/blxckbxll/Documents/Proyectos/AM/AccionMejora/src/components/PwaPrompt.vue -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
+// Tipo correcto para el evento beforeinstallprompt
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed'
+    platform: string
+  }>
+}
+
 const showInstallPrompt = ref(false)
 const showUpdatePrompt = ref(false)
-const deferredPrompt = ref<any>(null)
+const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
 
 const installApp = async () => {
-    if (!deferredPrompt.value) return
+  if (!deferredPrompt.value) return
 
-    deferredPrompt.value.prompt()
-    const { outcome } = await deferredPrompt.value.userChoice
+  deferredPrompt.value.prompt()
+  const { outcome } = await deferredPrompt.value.userChoice
 
-    if (outcome === 'accepted') {
-        console.log('Usuario aceptó instalar la app')
-    }
+  if (outcome === 'accepted') {
+    console.log('Usuario aceptó instalar la app')
+  }
 
-    deferredPrompt.value = null
-    showInstallPrompt.value = false
+  deferredPrompt.value = null
+  showInstallPrompt.value = false
 }
 
 const dismissInstall = () => {
-    showInstallPrompt.value = false
-    localStorage.setItem('pwa-install-dismissed', 'true')
+  showInstallPrompt.value = false
+  localStorage.setItem('pwa-install-dismissed', 'true')
 }
 
 const reloadPage = () => {
-    window.location.reload()
+  window.location.reload()
 }
 
 const dismissUpdate = () => {
-    showUpdatePrompt.value = false
+  showUpdatePrompt.value = false
 }
 
 onMounted(() => {
-    // Install prompt
-    window.addEventListener('beforeinstallprompt', (e: Event) => {
-        e.preventDefault()
-        deferredPrompt.value = e
+  // Install prompt
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    e.preventDefault()
 
-        const dismissed = localStorage.getItem('pwa-install-dismissed')
-        if (!dismissed) {
-            setTimeout(() => {
-                showInstallPrompt.value = true
-            }, 3000) // Mostrar después de 3 segundos
-        }
-    })
+    // Forzamos el tipo
+    deferredPrompt.value = e as BeforeInstallPromptEvent
 
-    // Update available
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            showUpdatePrompt.value = true
-        })
+    const dismissed = localStorage.getItem('pwa-install-dismissed')
+    if (!dismissed) {
+      setTimeout(() => {
+        showInstallPrompt.value = true
+      }, 3000)
     }
+  })
 
-    // Check if app is installed
-    window.addEventListener('appinstalled', () => {
-        console.log('App instalada exitosamente')
-        showInstallPrompt.value = false
+  // Update available
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      showUpdatePrompt.value = true
     })
+  }
+
+  // Already installed
+  window.addEventListener('appinstalled', () => {
+    console.log('App instalada exitosamente')
+    showInstallPrompt.value = false
+  })
 })
 </script>
 
