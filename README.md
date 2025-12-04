@@ -294,3 +294,13 @@ Evita poner “must-revalidate” fuera de las comillas o como directiva separad
 ---
 
 **¡Disfruta de la velocidad de la F1! 🏁**
+
+## Docker Hub (credenciales en Jenkins)
+- Crea una credencial en Jenkins:
+  - Manage Jenkins → Manage Credentials → (global) → Add Credentials
+  - Kind: Username with password
+  - ID: dockerhub-credentials
+  - Username: tu usuario Docker Hub (ej. blxckbxll24)
+  - Password: tu contraseña o Access Token de Docker Hub
+- Endpoint usado por el pipeline: `https://registry-1.docker.io`
+- Formato de imagen: `<usuario>/<imagen>:<tag>` (sin prefijar el dominio en el tag).

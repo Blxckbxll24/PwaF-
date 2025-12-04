@@ -3,12 +3,12 @@ pipeline {
   environment {
     APP_NAME = 'f1-dashboard'
     IMAGE = 'f1-dashboard'
-    REGISTRY = 'registry.render.com' // o tu registry (ghcr.io, docker.io, etc.)
-    NAMESPACE = 'your-namespace'
+    REGISTRY = 'registry-1.docker.io' // endpoint oficial de Docker Hub
+    NAMESPACE = 'blxckbxll24' // reemplaza por tu usuario de Docker Hub
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     KUBE_CONTEXT = 'your-kube-context'
     // IDs de credenciales en Jenkins
-    REGISTRY_CREDS = 'render-docker-registry'
+    REGISTRY_CREDS = 'dockerhub-credentials' // ID de credencial en Jenkins para Docker Hub
     KUBE_CREDS = 'kubeconfig-credentials'
     GITHUB_CREDS = 'github-credentials'
   }
@@ -44,14 +44,17 @@ pipeline {
     stage('Docker Build') {
       steps {
         script {
-          dockerImage = docker.build("${REGISTRY}/${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
+          def dockerImage = docker.build("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
         }
       }
     }
     stage('Docker Push') {
       steps {
         script {
+          // docker.withRegistry agrega el registry al login/push
           docker.withRegistry("https://${REGISTRY}", "${REGISTRY_CREDS}") {
+            // reconstruir referencia igual que en build
+            def dockerImage = docker.image("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
             dockerImage.push()
             dockerImage.push('latest')
           }
