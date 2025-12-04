@@ -6,10 +6,14 @@ pipeline {
     REGISTRY = 'registry-1.docker.io' // endpoint oficial de Docker Hub
     NAMESPACE = 'blxckbxll24' // reemplaza por tu usuario de Docker Hub
     IMAGE_TAG = "${env.BUILD_NUMBER}"
+    FULL_IMAGE = "${NAMESPACE}/${IMAGE}:${IMAGE_TAG}"
     KUBE_CONTEXT = 'your-kube-context'
-    // IDs de credenciales en Jenkins
+    // IDs de credenciales en Jenkins:
+    // REGISTRY_CREDS: credencial Docker Hub (Username/Password o Token)
+    // KUBE_CREDS: credencial tipo "Secret file" que contiene tu kubeconfig
+    // GITHUB_CREDS: credencial GitHub (PAT)
     REGISTRY_CREDS = 'dockerhub-credentials' // ID de credencial en Jenkins para Docker Hub
-    KUBE_CREDS = 'kubeconfig-credentials'
+    KUBE_CREDS = 'kubeconfig-credentials' // <- usa este ID al crear la credencial en Jenkins
     GITHUB_CREDS = 'github-credentials'
   }
   tools { nodejs 'NodeJS 20' }
@@ -58,17 +62,19 @@ pipeline {
             dockerImage.push()
             dockerImage.push('latest')
           }
+          echo "Pushed image: ${FULL_IMAGE}"
         }
       }
     }
     stage('Kubernetes Deploy') {
       when { anyOf { branch 'main'; branch 'develop' } }
       steps {
+        // Carga el archivo kubeconfig desde la credencial "Secret file" con ID KUBE_CREDS
         withCredentials([file(credentialsId: "${KUBE_CREDS}", variable: 'KUBECONFIG')]) {
           sh '''
             export KUBECONFIG=$KUBECONFIG
             # Reemplazar imagen en manifests
-            sed -i.bak "s|<REGISTRY>/<NAMESPACE>/f1-dashboard:latest|'"${REGISTRY}/${NAMESPACE}/${IMAGE}:${IMAGE_TAG}"'|g" k8s/deployment.yaml
+            sed -i.bak "s|blxckbxll24/f1-dashboard:latest|'"${NAMESPACE}/${IMAGE}:${IMAGE_TAG}"'|g" k8s/deployment.yaml
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
             kubectl apply -f k8s/ingress.yaml

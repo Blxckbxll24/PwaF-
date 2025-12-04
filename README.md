@@ -304,3 +304,117 @@ Evita poner “must-revalidate” fuera de las comillas o como directiva separad
   - Password: tu contraseña o Access Token de Docker Hub
 - Endpoint usado por el pipeline: `https://registry-1.docker.io`
 - Formato de imagen: `<usuario>/<imagen>:<tag>` (sin prefijar el dominio en el tag).
+
+## Después del push a Docker Hub: ¿qué sigue?
+
+Cuando el build termina y la imagen se sube al Docker Hub:
+- Despliegue: tu entorno (Kubernetes, VM o servicio de contenedores) puede “pull” la imagen `docker.io/<usuario>/<imagen>:<tag>` y ejecutar esa versión.
+- Versionado: cada build lleva un tag único (BUILD_NUMBER). Puedes fijar despliegues a una versión concreta, no solo `latest`.
+- Rollback: si algo falla, vuelves a una imagen anterior con `kubectl rollout undo` (K8s) o arrancando el contenedor con el tag previo.
+- Inmutabilidad: la imagen es un artefacto reproducible (misma app, mismas dependencias). Facilita auditoría y confiabilidad.
+- Promoción entre ambientes: usa el mismo artefacto para “staging” y “production” cambiando solo el tag o el namespace del cluster.
+- Seguridad: escanea la imagen (Trivy/Snyk), usa credenciales de pull (`imagePullSecrets`), limita permisos del contenedor (no-root).
+- Observabilidad: expón healthchecks (`/health`), agrega logs y métricas. En K8s, readiness/liveness probes mantienen el servicio estable.
+- CDN/Cache: Nginx sirve estáticos óptimos, y el SW PWA mantiene datos recientes para modo offline.
+
+Flujo habitual (CI/CD):
+1. Build + Test + Lint → generar `dist/` y `sw.js`.
+2. Docker Build → crear imagen `blxckbxll24/f1-dashboard:<BUILD_NUMBER>`.
+3. Docker Push → subir a Docker Hub.
+4. Deploy:
+   - Kubernetes: `kubectl apply` manifiestos con la nueva imagen; espera `rollout status`.
+   - VM/Compose: `docker pull` y `docker run` con el nuevo tag.
+5. Verificación:
+   - Health: `GET /health` en el servicio.
+   - PWA: navega online para “sembrar” cache; luego prueba offline.
+6. Rollback (si necesario):
+   - K8s: `kubectl rollout undo deployment/f1-dashboard`.
+   - Docker: reinicia con el tag anterior.
+
+Buenas prácticas:
+- Usa tags semánticos además de build numbers (ej. `v1.3.0`).
+- No dependas de `latest` para producción.
+- Mantén `REGISTRY`, `NAMESPACE`, `IMAGE` y `IMAGE_TAG` centralizados en Jenkins.
+- Asegura credenciales de Docker Hub y K8s en Jenkins (IDs: `dockerhub-credentials`, `kubeconfig-credentials`).
+
+## Despliegue en Render (contenedor con imagen de Docker Hub)
+1. Construye y sube tu imagen (pipeline ya lo hace):
+   - `docker push blxckbxll24/f1-dashboard:<BUILD_NUMBER>`
+   - `docker push blxckbxll24/f1-dashboard:latest`
+2. En Render:
+   - Crea “New Web Service” → “Deploy an existing image”.
+   - Image URL: `docker.io/blxckbxll24/f1-dashboard:latest` (o el tag fijo).
+   - Port: 8080
+   - Health Check Path: `/health`
+   - Variables: `NODE_ENV=production`
+3. Deploy → Render hará pull de la imagen y expondrá tu servicio.
+
+## Despliegue en Kubernetes (usando Docker Hub)
+1. Si tu Docker Hub es privado, crea el secret:
+   ```bash
+   kubectl create secret docker-registry registry-credentials \
+     --docker-server=registry-1.docker.io \
+     --docker-username=blxckbxll24 \
+     --docker-password=TU_TOKEN_O_PASSWORD \
+     --docker-email=TU_EMAIL
+   ```
+2. Aplica manifests:
+   ```bash
+   kubectl apply -f k8s/deployment.yaml
+   kubectl apply -f k8s/service.yaml
+   kubectl apply -f k8s/ingress.yaml
+   ```
+3. Verifica:
+   ```bash
+   kubectl get pods,svc,ingress
+   kubectl rollout status deployment/f1-dashboard
+   ```
+4. Accede por el host configurado en el Ingress (o usa port-forward para pruebas):
+   ```bash
+   kubectl port-forward svc/f1-dashboard 8080:80
+   # abrir http://localhost:8080
+   ```
+
+Notas:
+- El pipeline actual reemplaza la imagen en `k8s/deployment.yaml` con el tag del build.
+- Para Render, no necesitas Kubernetes: Render hace pull directo desde Docker Hub.
+- Mantén `imagePullSecrets` si el repo Docker Hub es privado.
+
+## Credenciales de Kubernetes (kubeconfig en Jenkins)
+
+Tu kubeconfig es el archivo que permite a kubectl (y Jenkins) autenticarse y hablar con tu cluster.
+
+Cómo obtener tu kubeconfig:
+- Minikube: `~/.kube/config` (o `minikube kubectl -- config view --raw`)
+- Kind/K3s/MicroK8s: normalmente `~/.kube/config`
+- Cloud (EKS/AKS/GKE): usa la CLI del proveedor para generar el kubeconfig local (ej. `aws eks update-kubeconfig --name <cluster>`)
+
+Crear la credencial en Jenkins:
+1. Ve a Manage Jenkins → Manage Credentials → (global) → Add Credentials
+2. Kind: Secret file
+3. File: Selecciona tu archivo kubeconfig (ej. `~/.kube/config`)
+4. ID: kubeconfig-credentials
+5. Description: Kubeconfig para despliegues de f1-dashboard
+
+Uso en el pipeline:
+- El Jenkinsfile ya referencia la credencial por ID:
+  - `KUBE_CREDS = 'kubeconfig-credentials'`
+- El stage de deploy usa:
+  - `withCredentials([file(credentialsId: "${KUBE_CREDS}", variable: 'KUBECONFIG')])`
+  - Esto exporta la ruta del kubeconfig en `KUBECONFIG` para kubectl.
+
+Verificación rápida:
+```bash
+# Desde un agente/nodo con el kubeconfig cargado
+kubectl get nodes
+kubectl get ns
+```
+
+Si tu cluster requiere imagePullSecrets:
+```bash
+kubectl create secret docker-registry registry-credentials \
+  --docker-server=registry-1.docker.io \
+  --docker-username=blxckbxll24 \
+  --docker-password=TU_TOKEN_O_PASSWORD \
+  --docker-email=TU_EMAIL
+```

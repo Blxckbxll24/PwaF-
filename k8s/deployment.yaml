@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: f1-dashboard
-          image: <REGISTRY>/<NAMESPACE>/f1-dashboard:latest
+          image: blxckbxll24/f1-dashboard:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
