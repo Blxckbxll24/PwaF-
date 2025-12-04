@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-br from-f1-red to-f1-red-dark text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 flex items-center gap-2;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+  }
+  
+  .btn-primary:hover {
+    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.4);
+  }
+
+  .btn-secondary {
+    @apply bg-white/10 text-white px-8 py-4 rounded-full font-semibold text-lg border border-white/20 backdrop-blur-sm transition-all duration-300 hover:bg-white/15;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-f1-red via-f1-orange to-f1-blue bg-clip-text text-transparent animate-shimmer bg-200%;
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+  .animation-delay-600 {
+    animation-delay: 0.6s;
+  }
+  .animation-delay-800 {
+    animation-delay: 0.8s;
+  }
+  .animation-delay-1000 {
+    animation-delay: 1s;
+  }
+}
