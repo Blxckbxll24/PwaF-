@@ -1,0 +1,32 @@
+# Jenkins personalizado con herramientas preinstaladas
+FROM jenkins/jenkins:lts
+
+USER root
+
+# Instalar Docker CLI y otras herramientas
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli
+
+# Instalar Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Instalar plugins de Jenkins automáticamente
+COPY jenkins-plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+
+# Configuración inicial de Jenkins
+COPY jenkins-config/ /usr/share/jenkins/ref/
+
+USER jenkins
+
+# Copiar configuración de jobs
+COPY jenkins-jobs/ /var/jenkins_home/jobs/
