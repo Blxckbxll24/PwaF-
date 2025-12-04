@@ -265,6 +265,19 @@ Checklist rápido:
 - Job con “Pipeline script from SCM” apuntando al repo.
 - Webhook configurado (opcional) a http://localhost:8090/github-webhook/.
 
+## Modo Offline (guardar “lo último cargado”)
+- Al navegar online por la app, el Service Worker guarda:
+  - App shell (SPA) para abrir sin conexión.
+  - Respuestas de la API de OpenF1 (HTTP 200) para usarlas offline.
+- Para probar:
+  1) Ejecuta build/contendor y abre la app online.
+  2) Navega por la Home/Features/Drivers para “sembrar” cache.
+  3) Apaga la red y recarga: verás los datos guardados.
+- Detalles técnicos:
+  - Estrategia NetworkFirst con fallback a cache.
+  - cacheableResponse: [0, 200] para responses CORS.
+  - cleanupOutdatedCaches habilitado.
+
 ## Nota de Nginx (Docker)
 Si ves:
 ```

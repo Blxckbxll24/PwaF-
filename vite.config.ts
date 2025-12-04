@@ -22,6 +22,9 @@ export default defineConfig({
           '**/W4 - GR W15 Blueprint.jpg',
           '**/Singapore GP 2025 Desktop Wallpaper 4.jpg'
         ],
+        cleanupOutdatedCaches: true,
+        navigateFallback: '/index.html',
+        navigationPreload: true,
         runtimeCaching: [
           // Cache para imágenes locales grandes (on-demand)
           {
@@ -35,22 +38,21 @@ export default defineConfig({
               }
             }
           },
-          // Cache para API de OpenF1
+          // Cache para API de OpenF1 (servir último dato si no hay red)
           {
             urlPattern: /^https:\/\/api\.openf1\.org\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'f1-api-cache',
               networkTimeoutSeconds: 3,
+              cacheableResponse: { statuses: [0, 200] },
               expiration: {
-                maxEntries: 100,
+                maxEntries: 200,
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 días
               },
               plugins: [
                 {
-                  cacheKeyWillBeUsed: async ({ request }: { request: Request }) => {
-                    return `${request.url}`
-                  }
+                  cacheKeyWillBeUsed: async ({ request }: { request: Request }) => `${request.url}`,
                 }
               ]
             }
