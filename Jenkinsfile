@@ -3,8 +3,8 @@ pipeline {
   environment {
     APP_NAME = 'f1-dashboard'
     IMAGE = 'f1-dashboard'
-    REGISTRY = 'registry-1.docker.io' // endpoint oficial de Docker Hub
-    NAMESPACE = 'blxckbxll24' // reemplaza por tu usuario de Docker Hub
+    REGISTRY = 'registry-1.docker.io' // Docker Hub oficial
+    NAMESPACE = 'blxckbxll24' // tu usuario de Docker Hub
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     FULL_IMAGE = "${NAMESPACE}/${IMAGE}:${IMAGE_TAG}"
     KUBE_CONTEXT = 'your-kube-context'
@@ -12,8 +12,8 @@ pipeline {
     // REGISTRY_CREDS: credencial Docker Hub (Username/Password o Token)
     // KUBE_CREDS: credencial tipo "Secret file" que contiene tu kubeconfig
     // GITHUB_CREDS: credencial GitHub (PAT)
-    REGISTRY_CREDS = 'dockerhub-credentials' // ID de credencial en Jenkins para Docker Hub
-    KUBE_CREDS = 'kubeconfig-credentials' // <- usa este ID al crear la credencial en Jenkins
+    REGISTRY_CREDS = 'dockerhub-credentials'
+    KUBE_CREDS = 'kubeconfig-credentials'
     GITHUB_CREDS = 'github-credentials'
   }
   tools { nodejs 'NodeJS 20' }
@@ -28,9 +28,7 @@ pipeline {
       }
     }
     stage('Install') {
-      steps {
-        sh 'npm ci'
-      }
+      steps { sh 'npm ci' }
     }
     stage('Lint & TypeCheck') {
       parallel {
@@ -48,16 +46,14 @@ pipeline {
     stage('Docker Build') {
       steps {
         script {
-          def dockerImage = docker.build("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
+          docker.build("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
         }
       }
     }
     stage('Docker Push') {
       steps {
         script {
-          // docker.withRegistry agrega el registry al login/push
           docker.withRegistry("https://${REGISTRY}", "${REGISTRY_CREDS}") {
-            // reconstruir referencia igual que en build
             def dockerImage = docker.image("${NAMESPACE}/${IMAGE}:${IMAGE_TAG}")
             dockerImage.push()
             dockerImage.push('latest')
@@ -69,15 +65,16 @@ pipeline {
     stage('Kubernetes Deploy') {
       when { anyOf { branch 'main'; branch 'develop' } }
       steps {
-        // Carga el archivo kubeconfig desde la credencial "Secret file" con ID KUBE_CREDS
         withCredentials([file(credentialsId: "${KUBE_CREDS}", variable: 'KUBECONFIG')]) {
           sh '''
             export KUBECONFIG=$KUBECONFIG
-            # Reemplazar imagen en manifests
-            sed -i.bak "s|blxckbxll24/f1-dashboard:latest|'"${NAMESPACE}/${IMAGE}:${IMAGE_TAG}"'|g" k8s/deployment.yaml
+            # Aplicar manifests (sin tocar archivos)
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
             kubectl apply -f k8s/ingress.yaml
+            # Actualizar la imagen del deployment al tag del build
+            kubectl set image deployment/f1-dashboard f1-dashboard=${NAMESPACE}/${IMAGE}:${IMAGE_TAG} --record
+            # Esperar rollout
             kubectl rollout status deployment/f1-dashboard --timeout=120s
           '''
         }
@@ -86,7 +83,6 @@ pipeline {
     stage('Render Trigger (opcional)') {
       when { branch 'main' }
       steps {
-        // Si prefieres Render en lugar de Kubernetes, descomenta este trigger de deploy.
         sh '''
           echo "Trigger opcional a Render API aquí si no usas Kubernetes."
           # curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
